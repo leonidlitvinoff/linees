@@ -7,7 +7,6 @@ class Life(Board):
         self.width_w = width_w
         self.height_w = height_w
         self.screen = pygame.display.set_mode((self.width_w, self.height_w))
-        self.red_count = 0
         self.count = 0
         self.itog = False
         self.run()
@@ -31,7 +30,6 @@ class Life(Board):
 
     def has_path(self, x1, y1, x2, y2):
         self.need = (x2, y2)
-        self.count = 0
         self.itog = False
         self.board2 = [i for i in self.board]
         self.bfs(x1, y1)
@@ -42,9 +40,7 @@ class Life(Board):
         return self.itog
 
     def bfs(self, x, y):
-        if self.board2[y][x] == 2:
-            self.count += 1
-        if self.count == 2:
+        if self.need == (x, y):
             self.itog = True
             return
         self.board2[y][x] = 4
@@ -88,40 +84,36 @@ class Life(Board):
         self.screen.fill((0, 0, 0))
         fps = 60
         clock = pygame.time.Clock()
-        last_mouse_left_click = 0
+        activated = 0
         while running:
             clock.tick(fps)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
-            if pygame.mouse.get_pressed()[0]:
-                last_mouse_left_click = 1
-            else:
-                if last_mouse_left_click:
-                    last_mouse_left_click = 0
-                    coords = self.get_cell(pygame.mouse.get_pos())
-                    if self.board[coords[0]][coords[1]] == 0:
-                        if not self.red_count == 1:
-                            self.board[coords[0]][coords[1]] = 1
-                        else:
-                            coords2 = (0, 0)
-                            for i in range(len(self.board)):
-                                for j in range(len(self.board[i])):
-                                    if self.board[i][j] == 2:
-                                        coords2 = (j, i)
-                                        break
-                            self.board[coords[0]][coords[1]] = 2
-                            m = self.has_path(coords[0], coords[1], coords2[0], coords2[1])
-                            if m:
-                                self.board[coords2[0]][coords2[1]] = 0
-                                self.board[coords[0]][coords[1]] = 1
-                                self.red_count -= 1
-                    elif self.board[coords[0]][coords[1]] == 1:
-                        self.red_count += 1
-                        self.board[coords[0]][coords[1]] = 2
-                    elif self.board[coords[0]][coords[1]] == 2:
-                        self.board[coords[0]][coords[1]] = 1
-                        self.red_count -= 1
+                if event.type == pygame.MOUSEBUTTONUP:
+                    if self.get_cell(pygame.mouse.get_pos()):
+                        a = self.get_cell(pygame.mouse.get_pos())
+                        if self.board[a[0]][a[1]] == 0:
+                            if not activated:
+                                self.board[a[0]][a[1]] = 1
+                            else:
+                                coords = 0
+                                for i in range(len(self.board)):
+                                    if 2 in self.board[i]:
+                                        coords = (i, self.board[i].index(2))
+                                if self.has_path(coords[1], coords[0], a[1], a[0]):
+                                    self.board[a[0]][a[1]] = 1
+                                    activated = 0
+                                else:
+                                    self.board[coords[0]][coords[1]] = 2
+                        elif self.board[a[0]][a[1]] == 1:
+                            if not activated:
+                                self.board[a[0]][a[1]] = 2
+                                activated = 1
+                        elif self.board[a[0]][a[1]] == 2:
+                            self.board[a[0]][a[1]] = 1
+                            activated = 0
+
             self.render(self.screen)
             pygame.display.flip()
 Life(10, 10, (50, 50), (0, 0))
